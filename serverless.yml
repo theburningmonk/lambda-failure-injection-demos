@@ -3,7 +3,7 @@ service: chaos-demos
 provider:
   name: aws
   runtime: nodejs12.x
-  stage: chaos
+  stage: dev
   environment:
     serviceName: ${self:service}
     stage: ${self:provider.stage}
