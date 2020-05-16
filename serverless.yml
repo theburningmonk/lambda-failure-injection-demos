@@ -11,6 +11,7 @@ provider:
 functions:
   get-index:
     handler: functions/get-index.handler
+    timeout: 3
     events:
       - http:
           path: /
@@ -36,6 +37,7 @@ functions:
 
   get-restaurants:
     handler: functions/get-restaurants.handler
+    timeout: 6
     events:
       - http:
           path: /restaurants
