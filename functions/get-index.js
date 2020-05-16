@@ -40,7 +40,7 @@ async function getRestaurants() {
   console.log(`loading restaurants from ${restaurantsApiRoot}...`)
 
   const timeout = global.context.getRemainingTimeInMillis() - resolvedTime
-  return await Promise.resolve(http.get("https://5rk9ciheec.execute-api.us-east-1.amazonaws.com/chaos/restaurants"))
+  return await Promise.resolve(http.get(restaurantsApiRoot))
     .timeout(timeout)
     .then(resp => {
       responseCache = resp.data
