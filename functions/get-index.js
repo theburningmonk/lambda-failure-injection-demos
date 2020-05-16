@@ -10,12 +10,6 @@ const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 
 
 const template = fs.readFileSync('static/index.html', 'utf-8')
 
-const getRestaurants = async () => {
-  console.log(`loading restaurants from ${restaurantsApiRoot}...`)
-  const httpReq = http.get(restaurantsApiRoot)
-  return (await httpReq).data
-}
-
 module.exports.handler = failureLambda(async (event, context) => {
   const restaurants = await getRestaurants()
   console.log(`found ${restaurants.length} restaurants`)  
@@ -27,13 +21,17 @@ module.exports.handler = failureLambda(async (event, context) => {
     placeOrderUrl: `${ordersApiRoot}`
   }
   const html = Mustache.render(template, view)
-  const response = {
+  return {
     statusCode: 200,
     headers: {
       'content-type': 'text/html; charset=UTF-8'
     },
     body: html
   }
-
-  return response
 })
+
+async function getRestaurants() {
+  console.log(`loading restaurants from ${restaurantsApiRoot}...`)
+  const httpReq = http.get(restaurantsApiRoot)
+  return (await httpReq).data
+}

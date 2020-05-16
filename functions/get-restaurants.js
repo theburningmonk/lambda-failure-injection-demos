@@ -1,10 +1,17 @@
 const DocumentClient = require('aws-sdk/clients/dynamodb').DocumentClient
 const dynamodb = new DocumentClient()
-
 const failureLambda = require('failure-lambda')
 const tableName = process.env.restaurants_table
 
-const getRestaurants = async (count) => {
+module.exports.handler = failureLambda(async (event, context) => {
+  const restaurants = await getRestaurants(8)
+  return {
+    statusCode: 200,
+    body: JSON.stringify(restaurants)
+  }
+})
+
+async function getRestaurants(count) {
   console.log(`fetching ${count} restaurants from ${tableName}...`)
   const req = {
     TableName: tableName,
@@ -15,11 +22,3 @@ const getRestaurants = async (count) => {
   console.log(`found ${resp.Items.length} restaurants`)
   return resp.Items
 }
-
-module.exports.handler = failureLambda(async (event, context) => {
-  const restaurants = await getRestaurants(8)
-  return {
-    statusCode: 200,
-    body: JSON.stringify(restaurants)
-  }
-})
