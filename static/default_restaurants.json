@@ -1,0 +1,20 @@
+[{ 
+  "name": "Shoney's", 
+  "image": "https://d2qt42rcwzspd6.cloudfront.net/manning/shoney's.png", 
+  "themes": ["cartoon", "rick and morty"] 
+},
+{ 
+  "name": "Lil' Bits", 
+  "image": "https://d2qt42rcwzspd6.cloudfront.net/manning/lil+bits.png", 
+  "themes": ["cartoon", "rick and morty"] 
+},
+{ 
+  "name": "Fancy Eats", 
+  "image": "https://d2qt42rcwzspd6.cloudfront.net/manning/fancy+eats.png", 
+  "themes": ["cartoon", "rick and morty"] 
+},
+{ 
+  "name": "Don Cuco", 
+  "image": "https://d2qt42rcwzspd6.cloudfront.net/manning/don%20cuco.png", 
+  "themes": ["cartoon", "rick and morty"] 
+}]

@@ -26,6 +26,7 @@
   "dependencies": {
     "aws4": "^1.9.1",
     "axios": "^0.19.2",
+    "bluebird": "^3.7.2",
     "chance": "^1.1.4",
     "failure-lambda": "^0.2.0",
     "lodash": "^4.17.15",
