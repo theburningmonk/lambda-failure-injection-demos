@@ -1,0 +1,137 @@
+service: chaos-demos
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: chaos
+  environment:
+    serviceName: ${self:service}
+    stage: ${self:provider.stage}
+
+functions:
+  get-index:
+    handler: functions/get-index.handler
+    events:
+      - http:
+          path: /
+          method: get
+    environment:
+      FAILURE_INJECTION_PARAM: !Ref GetIndexParameter
+      restaurants_api:
+        Fn::Join:
+          - ""
+          - - https://
+            - !Ref ApiGatewayRestApi
+            - .execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}/restaurants
+      orders_api:
+        Fn::Join:
+          - ""
+          - - https://
+            - !Ref ApiGatewayRestApi
+            - .execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}/orders
+    iamRoleStatements:
+      - Effect: Allow
+        Action: ssm:GetParameter*
+        Resource: arn:aws:ssm:#{AWS::Region}:#{AWS::AccountId}:parameter#{GetIndexParameter}
+
+  get-restaurants:
+    handler: functions/get-restaurants.handler
+    events:
+      - http:
+          path: /restaurants
+          method: get
+    environment:
+      restaurants_table: !Ref RestaurantsTable
+      FAILURE_INJECTION_PARAM: !Ref GetRestaurantsParameter
+    iamRoleStatements:
+      - Effect: Allow
+        Action: dynamodb:scan
+        Resource: !GetAtt RestaurantsTable.Arn
+      - Effect: Allow
+        Action: ssm:GetParameter*
+        Resource: arn:aws:ssm:#{AWS::Region}:#{AWS::AccountId}:parameter#{GetRestaurantsParameter}
+
+  search-restaurants:
+    handler: functions/search-restaurants.handler
+    events:
+      - http:
+          path: /restaurants/search
+          method: post
+    environment:
+      FAILURE_INJECTION_PARAM: !Ref SearchRestaurantsParameter
+      restaurants_table: !Ref RestaurantsTable
+    iamRoleStatements:
+      - Effect: Allow
+        Action: dynamodb:scan
+        Resource: !GetAtt RestaurantsTable.Arn
+      - Effect: Allow
+        Action: ssm:GetParameter*
+        Resource: arn:aws:ssm:#{AWS::Region}:#{AWS::AccountId}:parameter#{SearchRestaurantsParameter}
+
+  seed-restaurants:
+    handler: functions/seed-restaurants.handler
+    iamRoleStatements:
+      - Effect: Allow
+        Action: dynamodb:BatchWriteItem
+        Resource: !GetAtt RestaurantsTable.Arn
+    environment:
+      restaurants_table: !Ref RestaurantsTable
+
+resources:
+  Transform: AWS::Serverless-2016-10-31
+  Resources:
+    RestaurantsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: name
+            AttributeType: S
+        KeySchema:
+          - AttributeName: name
+            KeyType: HASH
+
+    GetIndexParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: /${self:service}/${self:provider.stage}/get-index-config
+        Type: String
+        Value: '{"isEnabled": false, "failureMode": "latency", "rate": 1, "minLatency": 100, "maxLatency": 400, "exceptionMsg": "Exception message!", "statusCode": 404, "diskSpace": 100, "blacklist": ["s3.*.amazonaws.com", "dynamodb.*.amazonaws.com"]}'
+
+    GetRestaurantsParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: /${self:service}/${self:provider.stage}/get-restaurants-config
+        Type: String
+        Value: '{"isEnabled": false, "failureMode": "blacklist", "rate": 1, "minLatency": 100, "maxLatency": 400, "exceptionMsg": "Exception message!", "statusCode": 404, "diskSpace": 100, "blacklist": ["s3.*.amazonaws.com", "dynamodb.*.amazonaws.com"]}'
+
+    SearchRestaurantsParameter:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: /${self:service}/${self:provider.stage}/search-restaurants-config
+        Type: String
+        Value: '{"isEnabled": false, "failureMode": "blacklist", "rate": 1, "minLatency": 100, "maxLatency": 400, "exceptionMsg": "Exception message!", "statusCode": 404, "diskSpace": 100, "blacklist": ["s3.*.amazonaws.com", "dynamodb.*.amazonaws.com"]}'
+
+    LambdaInvocationCustomResource:
+      Type: AWS::Serverless::Application
+      Properties:
+        Location:
+          ApplicationId: arn:aws:serverlessrepo:us-east-1:374852340823:applications/lambda-invocation-cfn-custom-resource
+          SemanticVersion: 1.4.0
+
+    # custom resource to invoke the seed-restaurants function during deployment
+    InvokeSeedRestaurants:
+      Type: Custom::LambdaInvocation
+      DependsOn:
+        - SeedDashrestaurantsLambdaFunction
+        - LambdaInvocationCustomResource
+      Properties:
+        ServiceToken: !GetAtt LambdaInvocationCustomResource.Outputs.FunctionArn
+        FunctionName: !Ref SeedDashrestaurantsLambdaFunction
+        Payload: {}
+        When: Create
+
+plugins:
+  - serverless-export-env
+  - serverless-pseudo-parameters
+  - serverless-iam-roles-per-function
