@@ -18,7 +18,7 @@
     "cross-env": "^7.0.2",
     "dotenv": "^8.2.0",
     "jest": "^25.3.0",
-    "serverless": "^1.67.3",
+    "serverless": "^3.25.1",
     "serverless-export-env": "^1.2.0",
     "serverless-iam-roles-per-function": "^2.0.2",
     "serverless-pseudo-parameters": "^2.5.0"
